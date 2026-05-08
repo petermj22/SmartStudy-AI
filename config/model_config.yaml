@@ -1,0 +1,73 @@
+# ============================================================
+# SmartStudy ML Model Configuration
+# ============================================================
+
+models_dir: "ml_training/trained_models"
+
+ensemble_classifier:
+  version: "v1.0"
+  classes:
+    0: "distracted"
+    1: "focused"
+    2: "fatigued"
+  feature_columns:
+    - avg_ear
+    - left_ear
+    - right_ear
+    - ear_variance
+    - mar
+    - yawn_detected
+    - head_pitch
+    - head_yaw
+    - head_roll
+    - gaze_x
+    - gaze_y
+    - gaze_stability
+    - blink_rate
+    - blink_duration_avg
+    - eye_closure_ratio
+    - head_movement_magnitude
+    - head_stability
+    - ear_trend
+    - ear_mean
+    - ear_std
+    - brow_raise
+    - eye_squint
+    - time_of_day
+    - session_duration
+    - time_since_break
+    - cumulative_fatigue_score
+  weights:
+    random_forest: 0.33
+    xgboost: 0.34
+    lightgbm: 0.33
+  thresholds:
+    focused_confidence: 0.6
+    distracted_confidence: 0.55
+    fatigued_confidence: 0.55
+
+lstm_predictor:
+  version: "v1.0"
+  sequence_length: 300
+  prediction_horizon: 5
+  temporal_features:
+    - avg_ear
+    - blink_rate
+    - mar
+    - head_pitch
+    - head_yaw
+    - gaze_stability
+    - cumulative_fatigue_score
+  fatigue_thresholds:
+    low: 0.3
+    moderate: 0.6
+    high: 0.8
+  break_timing:
+    low_fatigue_minutes: 25.0
+    moderate_fatigue_minutes: 15.0
+    high_fatigue_minutes: 5.0
+    critical_fatigue_minutes: 0.0
+  break_duration:
+    low_fatigue_minutes: 5.0
+    moderate_fatigue_minutes: 10.0
+    high_fatigue_minutes: 15.0

@@ -1,0 +1,41 @@
+# ============================================================
+# SmartStudy Code Quality Gate
+# ============================================================
+name: Code Quality
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Check formatting
+        run: black backend/ frontend/ tests/ --check
+
+      - name: Lint
+        run: ruff check backend/ frontend/ tests/
+
+      - name: Security audit (pip-audit)
+        run: |
+          pip install pip-audit
+          pip-audit --strict || true
+
+      - name: Check for TODO/FIXME in production code
+        run: |
+          ! grep -rn "TODO\|FIXME\|HACK\|XXX" backend/ frontend/ \
+            --include="*.py" || echo "⚠️  Found TODO/FIXME markers"

@@ -1,0 +1,22 @@
+[server]
+port = 8501
+headless = false
+runOnSave = false
+maxUploadSize = 50
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "dark"
+primaryColor = "#8B5CF6"
+backgroundColor = "#09090B"
+secondaryBackgroundColor = "#12121E"
+textColor = "#E2E8F0"
+font = "sans serif"
+
+[logger]
+level = "warning"
+
+[runner]
+magicEnabled = false

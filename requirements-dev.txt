@@ -1,0 +1,22 @@
+# ============================================================
+# SmartStudy - Development Dependencies
+# ============================================================
+-r requirements.txt
+
+# Testing
+pytest==7.4.3
+pytest-cov==4.1.0
+pytest-asyncio==0.21.1
+pytest-benchmark==4.0.0
+
+# Code Quality
+black==23.12.1
+ruff==0.1.9
+mypy==1.8.0
+
+# Documentation
+sphinx==7.2.6
+
+# Jupyter
+jupyter==1.0.0
+notebook==7.0.6

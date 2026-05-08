@@ -1,0 +1,82 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Environment variables
+.env
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+data/
+
+# Model files (large binary files)
+ml_training/trained_models/*.pkl
+ml_training/trained_models/*.h5
+ml_training/trained_models/*.tflite
+ml_training/trained_models/*.json
+ml_training/datasets/
+
+# Logs
+logs/
+*.log
+
+# Testing
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb~
+
+# Distribution
+dist/
+build/
+
+# Video recordings (sensitive)
+*.mp4
+*.avi
+*.mov
+
+# OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini

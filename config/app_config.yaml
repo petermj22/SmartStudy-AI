@@ -1,0 +1,61 @@
+# SmartStudy v2.0 — Application Configuration
+
+app:
+  name: "SmartStudy"
+  version: "2.0.0"
+  description: "AI-Powered Study Session Optimizer"
+  debug: false
+  log_level: "INFO"
+
+camera:
+  device_id: 0
+  width: 1280
+  height: 720
+  fps: 30
+  buffer_size: 2
+  auto_reconnect: true
+  reconnect_delay_seconds: 2.0
+  min_detection_confidence: 0.3
+  enable_preprocessing: true
+
+inference:
+  frame_skip: 1
+  smoothing_window: 15
+  max_inference_ms: 100
+  feature_buffer_size: 900
+  use_kalman_fusion: true
+
+session:
+  auto_save_interval_seconds: 60
+  frame_sample_rate: 30
+  thumbnail_interval_seconds: 10.0
+  thumbnail_width: 320
+  thumbnail_height: 180
+  thumbnail_quality: 75
+
+alerts:
+  ear_drowsy_threshold: 0.25
+  ear_closed_threshold: 0.21
+  mar_yawn_threshold: 0.60
+  head_yaw_away_degrees: 30.0
+  head_pitch_down_degrees: 20.0
+  blink_rate_high: 30
+  consecutive_closed_frames: 90
+  alert_cooldown_seconds: 45
+
+ui:
+  page_title: "SmartStudy"
+  page_icon: "🎯"
+  layout: "wide"
+  update_interval_seconds: 0.1
+  chart_height: 320
+
+database:
+  path: "data/smartstudy.db"
+  echo: false
+
+logging:
+  level: "INFO"
+  dir: "logs"
+  rotation: "10 MB"
+  retention: "30 days"
