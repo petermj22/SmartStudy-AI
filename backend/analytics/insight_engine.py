@@ -35,7 +35,7 @@ class InsightEngine:
 
         if len(sessions) < self.MIN_SESSIONS_FOR_INSIGHTS:
             return [{
-                "type": "info", "icon": "📊",
+                "type": "info", "icon": "info",
                 "title": "Keep going!",
                 "message": f"Complete {self.MIN_SESSIONS_FOR_INSIGHTS - len(sessions)} more sessions to unlock personalized insights.",
                 "priority": 0,
@@ -72,7 +72,7 @@ class InsightEngine:
 
         period = "morning" if best_hour < 12 else "afternoon" if best_hour < 17 else "evening"
         return [{
-            "type": "peak_hour", "icon": "⏰",
+            "type": "peak_hour", "icon": "schedule",
             "title": f"Your peak focus time is {best_hour}:00",
             "message": f"You average {best_focus:.0f}% focus during the {period}. Schedule important subjects here.",
             "priority": 3,
@@ -94,14 +94,14 @@ class InsightEngine:
 
         if diff > 0:
             return [{
-                "type": "trend_up", "icon": "📈",
+                "type": "trend_up", "icon": "trending_up",
                 "title": f"Focus improved by {diff:.0f}%!",
                 "message": f"Your recent sessions average {recent_avg:.0f}% focus vs {older_avg:.0f}% before. Keep it up!",
                 "priority": 4,
             }]
         else:
             return [{
-                "type": "trend_down", "icon": "📉",
+                "type": "trend_down", "icon": "trending_down",
                 "title": f"Focus dropped by {abs(diff):.0f}%",
                 "message": f"Recent: {recent_avg:.0f}% vs earlier: {older_avg:.0f}%. Try shorter sessions with more breaks.",
                 "priority": 4,
@@ -120,7 +120,7 @@ class InsightEngine:
         diff = focus_with - focus_without
         if diff > 5:
             return [{
-                "type": "break_benefit", "icon": "☕",
+                "type": "break_benefit", "icon": "coffee",
                 "title": "Breaks boost your focus!",
                 "message": f"Sessions with breaks: {focus_with:.0f}% focus vs without: {focus_without:.0f}%. Don't skip breaks!",
                 "priority": 3,
@@ -147,7 +147,7 @@ class InsightEngine:
 
         if avgs[best] - avgs[worst] > 10:
             return [{
-                "type": "subject_gap", "icon": "📚",
+                "type": "subject_gap", "icon": "menu_book",
                 "title": f"You focus best on {best}",
                 "message": f"{best}: {avgs[best]:.0f}% focus vs {worst}: {avgs[worst]:.0f}%. Try studying {worst} during your peak hours.",
                 "priority": 2,
@@ -170,7 +170,7 @@ class InsightEngine:
 
             if short_focus > long_focus + 10:
                 return [{
-                    "type": "duration", "icon": "⏱️",
+                    "type": "duration", "icon": "timer",
                     "title": "Shorter sessions work better for you",
                     "message": f"Under 30min: {short_focus:.0f}% focus vs over 60min: {long_focus:.0f}%. Try Pomodoro technique.",
                     "priority": 2,
@@ -190,14 +190,14 @@ class InsightEngine:
 
         if consistency >= 70:
             return [{
-                "type": "consistency", "icon": "🔥",
+                "type": "consistency", "icon": "local_fire_department",
                 "title": f"Great consistency — {active_days} active days!",
                 "message": f"You studied {consistency:.0f}% of the last {total_days} days. Consistency beats intensity!",
                 "priority": 2,
             }]
         elif consistency < 30:
             return [{
-                "type": "consistency", "icon": "📅",
+                "type": "consistency", "icon": "event",
                 "title": "Build a study habit",
                 "message": f"You studied {active_days}/{total_days} days. Try scheduling fixed study times.",
                 "priority": 1,

@@ -235,7 +235,7 @@ class OnlineFocusLearner:
             return "Provide feedback ratings to improve accuracy"
         if acc < 0.85:
             return f"Model accuracy: {acc:.0%} — improving with each session"
-        return f"Fully personalized! Accuracy: {acc:.0%} 🎯"
+        return f"Fully personalized! Accuracy: {acc:.0%}"
 
     def save(self) -> None:
         """Persist model and scaler to disk."""

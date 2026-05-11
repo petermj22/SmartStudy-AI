@@ -39,12 +39,11 @@ except ImportError:
 from frontend.ui.icons import icon
 
 
-# ── RTC Config for free STUN servers ──────────────────────────
+# ── RTC Config — Local-only (no external STUN/TURN) ───────────
+# Privacy-first: all media capture is on-device. No ICE negotiation
+# with external servers is needed for localhost streaming.
 RTC_CONFIG_DICT = {
-    "iceServers": [
-        {"urls": ["stun:stun.l.google.com:19302"]},
-        {"urls": ["stun:stun1.l.google.com:19302"]},
-    ]
+    "iceServers": []
 }
 
 # ── Overlay drawing constants ─────────────────────────────────
@@ -52,15 +51,15 @@ FONT = cv2.FONT_HERSHEY_SIMPLEX
 FONT_SMALL = cv2.FONT_HERSHEY_PLAIN
 
 STATE_COLORS_BGR = {
-    0: (52, 211, 153),   # Focused → green
-    1: (36, 191, 251),   # Distracted → yellow/amber
+    1: (52, 211, 153),   # Focused → green (OpenCV is BGR so (G,B,R) -> 153, 211, 52 but BGR is (52, 211, 153))
+    0: (36, 191, 251),   # Distracted → yellow/amber
     2: (113, 113, 248),  # Fatigued → red
     -1: (148, 163, 184), # Unknown → gray
 }
 
 STATE_LABELS = {
-    0: "FOCUSED",
-    1: "DISTRACTED",
+    1: "FOCUSED",
+    0: "DISTRACTED",
     2: "FATIGUED",
     -1: "DETECTING...",
 }
@@ -184,27 +183,26 @@ class FocusVideoProcessor(VideoProcessorBase):
         if not self._engine_loaded:
             try:
                 from backend.core.inference_engine import InferenceEngine
-                import streamlit as st
-                
+
                 # Fetch calibration from preferences if available
                 calibration = None
                 try:
-                    from backend.database.db_manager import DatabaseManager
-                    # In a thread, st.session_state might be tricky, but we can try to access db directly if needed
-                    # For safety, we just fetch what we can. Usually, db is at frontend.app.py scope.
-                    # Alternatively, if we get it from st.session_state (if it's accessible):
+                    from backend.database.manager import DatabaseManager
+                    import streamlit as st
                     if 'db_manager' in st.session_state:
-                        user = st.session_state.db_manager.get_user()
-                        prefs = user.get_preferences() if user else {}
-                        if 'baseline_ear' in prefs:
-                            calibration = {
-                                "baseline_ear": prefs.get("baseline_ear", 0.3),
-                                "baseline_mar": prefs.get("baseline_mar", 0.1),
-                                "baseline_blink_rate": prefs.get("baseline_blink_rate", 15.0)
-                            }
+                        db = st.session_state.db_manager
+                        if db:
+                            user = db.get_user()
+                            prefs = user.get_preferences() if user else {}
+                            if 'baseline_ear' in prefs:
+                                calibration = {
+                                    "baseline_ear": prefs.get("baseline_ear", 0.3),
+                                    "baseline_mar": prefs.get("baseline_mar", 0.1),
+                                    "baseline_blink_rate": prefs.get("baseline_blink_rate", 15.0)
+                                }
                 except Exception:
                     pass
-                    
+
                 self._engine = InferenceEngine(calibration=calibration)
                 self._engine_loaded = True
             except Exception as e:
@@ -223,26 +221,27 @@ class FocusVideoProcessor(VideoProcessorBase):
             self._fps = 0.9 * self._fps + 0.1 * (1.0 / dt)
         self._last_time = now
 
-        # Process
+        # Process frame through inference engine (single arg — bgr_frame only)
         self._ensure_engine()
         result = None
         if self._engine is not None:
             try:
-                result = self._engine.process_frame(img, self._frame_count)
+                result = self._engine.process_frame(img)
             except Exception:
                 result = None
 
-        # Draw overlay
+        # Extract result fields safely for HUD overlay
         if result is not None and result.face_detected:
+            features = result.features
             annotated = draw_hud_overlay(
                 img,
-                state=getattr(result, 'focus_state', -1),
-                confidence=getattr(result, 'confidence', 0),
-                attention=getattr(result, 'attention_score', 0),
-                ear=getattr(result, 'ear', 0),
-                blink_rate=getattr(result, 'blink_rate', 0),
-                head_yaw=getattr(result, 'head_yaw', 0),
-                fatigue=getattr(result, 'fatigue_score', 0),
+                state=result.smoothed_focus_state,
+                confidence=result.focus_confidence,
+                attention=result.attention_score * 100,
+                ear=features.avg_ear if features else 0.0,
+                blink_rate=features.blink_rate if features else 0.0,
+                head_yaw=features.head_yaw if features else 0.0,
+                fatigue=result.fatigue_score,
                 fps=self._fps,
                 face_detected=True,
             )
@@ -252,15 +251,13 @@ class FocusVideoProcessor(VideoProcessorBase):
         # Try to capture thumbnail
         if result is not None and result.face_detected:
             try:
-                import streamlit as st
-                thumb_recorder = st.session_state.get("thumb_recorder")
-                if thumb_recorder:
-                    thumb_recorder.try_capture(
+                if hasattr(self, "thumb_recorder") and self.thumb_recorder and result.features:
+                    self.thumb_recorder.try_capture(
                         bgr_frame=img,
-                        focus_state=getattr(result, 'focus_state', -1),
-                        attention=getattr(result, 'attention_score', 0),
-                        ear=getattr(result, 'ear', 0),
-                        fatigue=getattr(result, 'fatigue_score', 0)
+                        focus_state=result.smoothed_focus_state,
+                        attention=result.attention_score,
+                        ear=result.features.avg_ear,
+                        fatigue=result.fatigue_score,
                     )
             except Exception:
                 pass
@@ -310,12 +307,14 @@ def _render_webrtc_mode(key: str) -> Optional[Any]:
         rtc_configuration=rtc_config,
         video_processor_factory=FocusVideoProcessor,
         media_stream_constraints={
-            "video": {
-                "width": {"ideal": 1280, "min": 640},
-                "height": {"ideal": 720, "min": 480},
-                "frameRate": {"ideal": 30, "min": 15},
-            },
+            "video": True,
             "audio": False,
+        },
+        video_html_attrs={
+            "autoPlay": True,
+            "controls": False,
+            "style": {"width": "100%"},
+            "muted": True
         },
         async_processing=True,
     )
@@ -347,7 +346,12 @@ def _render_webrtc_mode(key: str) -> Optional[Any]:
 
     # Get result from processor queue
     if ctx.video_processor and ctx.state.playing:
+        if not hasattr(ctx.video_processor, "thumb_recorder_injected"):
+            ctx.video_processor.thumb_recorder = st.session_state.get("thumb_recorder")
+            ctx.video_processor.thumb_recorder_injected = True
+            
         try:
+            # Non-blocking get
             return ctx.video_processor.result_queue.get_nowait()
         except queue.Empty:
             return None

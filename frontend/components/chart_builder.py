@@ -424,7 +424,7 @@ def _empty_chart(message: str) -> go.Figure:
     """Return elegant empty chart."""
     fig = go.Figure()
     fig.add_annotation(
-        text=f"<span style='font-size:28px'>📊</span><br><br>{message}",
+        text=f"{message}",
         xref="paper", yref="paper",
         x=0.5, y=0.5, showarrow=False,
         font=dict(size=14, color=COLORS["text_muted"]),

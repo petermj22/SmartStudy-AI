@@ -197,56 +197,62 @@ class SessionReplayEngine:
         from datetime import datetime
         meta_data = [
             ["Session ID", session_id[:8] + "..."],
-            ["Date", datetime.now().strftime("%B %d, %Y")],
+            ["Date", datetime.now().strftime("%B %d, %Y - %H:%M")],
             ["Duration", f"{metrics.get('duration_minutes', 0):.0f} minutes"],
             ["Subject", metrics.get("subject", "General")],
         ]
-        meta_table = Table(meta_data, colWidths=[5*cm, 10*cm])
+        meta_table = Table(meta_data, colWidths=[4*cm, 12*cm])
         meta_table.setStyle(TableStyle([
             ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
-            ("FONTSIZE", (0, 0), (-1, -1), 10),
+            ("FONTSIZE", (0, 0), (-1, -1), 11),
             ("FONTNAME", (0, 0), (0, -1), "Helvetica-Bold"),
-            ("TEXTCOLOR", (0, 0), (0, -1), colors.HexColor("#3B82F6")),
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-            ("PADDING", (0, 0), (-1, -1), 8),
+            ("TEXTCOLOR", (0, 0), (0, -1), colors.HexColor("#8B5CF6")),
+            ("BACKGROUND", (0,0), (-1,-1), colors.HexColor("#F8FAFC")),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 10),
+            ("TOPPADDING", (0, 0), (-1, -1), 10),
+            ("LINEBELOW", (0,0), (-1,-1), 1, colors.HexColor("#E2E8F0")),
         ]))
         story.append(meta_table)
-        story.append(Spacer(1, 0.5 * cm))
-        story.append(HRFlowable(width="100%", thickness=1, color=colors.HexColor("#E2E8F0")))
-        story.append(Spacer(1, 0.5 * cm))
+        story.append(Spacer(1, 1 * cm))
 
-        story.append(Paragraph("Performance Summary", styles["Heading2"]))
+        story.append(Paragraph("Performance Metrics", styles["Heading2"]))
         focus_pct = metrics.get("focus_percentage", 0)
         perf_data = [
-            ["Metric", "Value", "Rating"],
-            ["Average Focus", f"{focus_pct:.0f}%",
-             "Excellent" if focus_pct > 80 else "Good" if focus_pct > 60 else "Fair"],
-            ["Attention Score", f"{metrics.get('avg_attention_score', 0):.0f}/100", ""],
-            ["Break Count", str(metrics.get("break_count", 0)), ""],
-            ["Distractions", str(metrics.get("distraction_count", 0)), ""],
+            ["Metric", "Score", "Evaluation"],
+            ["Overall Focus", f"{focus_pct:.0f}%",
+             "Excellent" if focus_pct >= 85 else "Good" if focus_pct >= 60 else "Requires Improvement"],
+            ["Avg. Attention", f"{metrics.get('avg_attention_score', 0):.0f}/100", ""],
+            ["Rest Breaks", str(metrics.get("break_count", 0)), ""],
+            ["Distraction Events", str(metrics.get("distraction_count", 0)), ""],
+            ["Fatigue Events", str(metrics.get("fatigue_events", 0)), ""],
         ]
-        perf_table = Table(perf_data, colWidths=[6*cm, 5*cm, 5*cm])
+        perf_table = Table(perf_data, colWidths=[6.5*cm, 4*cm, 5.5*cm])
         perf_table.setStyle(TableStyle([
             ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#3B82F6")),
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#8B5CF6")),
             ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#E2E8F0")),
-            ("PADDING", (0, 0), (-1, -1), 8),
+            ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#CBD5E1")),
+            ("PADDING", (0, 0), (-1, -1), 12),
             ("FONTSIZE", (0, 0), (-1, -1), 10),
+            ("ALIGN", (1,0), (1,-1), "CENTER"),
         ]))
         story.append(perf_table)
 
         # Add thumbnail grid (first 6 frames)
         if frames:
+            story.append(Spacer(1, 1 * cm))
+            story.append(Paragraph("Session Timeline Snapshots", styles["Heading2"]))
             story.append(Spacer(1, 0.5 * cm))
-            story.append(Paragraph("Session Snapshots", styles["Heading2"]))
-            story.append(Spacer(1, 0.3 * cm))
 
             thumb_row: list = []
             for i, frame in enumerate(frames[:6]):
-                pil_img = Image.fromarray(self.decode_thumbnail(frame))
-                img_buf = io.BytesIO()
-                pil_img.save(img_buf, format="JPEG", quality=80)
+                try:
+                    pil_img = Image.fromarray(self.decode_thumbnail(frame))
+                    img_buf = io.BytesIO()
+                    pil_img.save(img_buf, format="JPEG", quality=85)
+                except Exception as e:
+                    logger.error(f"Failed to decode thumbnail for PDF: {e}")
+                    continue
                 img_buf.seek(0)
                 rl_img = RLImage(img_buf, width=5*cm, height=2.8*cm)
                 thumb_row.append(rl_img)

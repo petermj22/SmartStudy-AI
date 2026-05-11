@@ -17,10 +17,9 @@ from dataclasses import dataclass
 from typing import List, Optional
 
 import cv2
-import mediapipe as mp
 import numpy as np
 from loguru import logger
-
+import os
 
 @dataclass
 class DetectionResult:
@@ -35,43 +34,42 @@ class DetectionResult:
 
     @property
     def has_iris(self) -> bool:
-        return self.landmarks is not None and self.landmarks.shape[0] >= 478
+        return False # LBF does not provide iris landmarks
 
 
 class FaceDetector:
     """
-    Production face detector using MediaPipe Face Mesh.
-
-    Extracts 468 facial landmarks + 10 iris landmarks (478 total).
-    Thread-safe — each instance maintains its own MediaPipe graph.
+    Production face detector using OpenCV Haar Cascade + LBF Landmarks.
+    Fully compatible with Python 3.14 where MediaPipe wheels are broken.
+    Extracts 68 facial landmarks.
     """
 
     # Eye landmarks (6 points each for EAR calculation)
-    LEFT_EYE_INDICES: List[int] = [362, 385, 387, 263, 373, 380]
-    RIGHT_EYE_INDICES: List[int] = [33, 160, 158, 133, 153, 144]
+    LEFT_EYE_INDICES: List[int] = [36, 37, 38, 39, 40, 41]
+    RIGHT_EYE_INDICES: List[int] = [42, 43, 44, 45, 46, 47]
 
-    # Iris landmarks (5 points each)
-    LEFT_IRIS_INDICES: List[int] = [468, 469, 470, 471, 472]
-    RIGHT_IRIS_INDICES: List[int] = [473, 474, 475, 476, 477]
+    # Iris landmarks (not available in 68-point, left empty)
+    LEFT_IRIS_INDICES: List[int] = []
+    RIGHT_IRIS_INDICES: List[int] = []
 
     # Mouth landmarks (6 points for MAR)
-    MOUTH_INDICES: List[int] = [61, 291, 0, 17, 84, 314]
+    MOUTH_INDICES: List[int] = [48, 54, 51, 57, 62, 66]
 
     # Head pose key points for solvePnP
-    HEAD_POSE_INDICES: List[int] = [1, 152, 263, 33, 287, 57]
+    HEAD_POSE_INDICES: List[int] = [30, 8, 36, 45, 48, 54]
 
     # Brow landmarks
-    LEFT_BROW_INDICES: List[int] = [70, 63, 105, 66, 107]
-    RIGHT_BROW_INDICES: List[int] = [300, 293, 334, 296, 336]
+    LEFT_BROW_INDICES: List[int] = [17, 18, 19, 20, 21]
+    RIGHT_BROW_INDICES: List[int] = [22, 23, 24, 25, 26]
 
     # 3D canonical face model points (mm) for PnP
     HEAD_MODEL_3D_POINTS: np.ndarray = np.array([
-        (0.0, 0.0, 0.0),          # Nose tip
-        (0.0, -63.6, -12.5),      # Chin
-        (-43.3, 32.7, -26.0),     # Left eye left corner
-        (43.3, 32.7, -26.0),      # Right eye right corner
-        (-28.9, -28.9, -24.1),    # Left mouth corner
-        (28.9, -28.9, -24.1),     # Right mouth corner
+        (0.0, 0.0, 0.0),          # Nose tip (30)
+        (0.0, -63.6, -12.5),      # Chin (8)
+        (-43.3, 32.7, -26.0),     # Left eye corner (36)
+        (43.3, 32.7, -26.0),      # Right eye corner (45)
+        (-28.9, -28.9, -24.1),    # Left mouth corner (48)
+        (28.9, -28.9, -24.1),     # Right mouth corner (54)
     ], dtype=np.float64)
 
     def __init__(
@@ -80,103 +78,58 @@ class FaceDetector:
         min_tracking_confidence: float = 0.5,
         max_num_faces: int = 1,
         refine_landmarks: bool = True,
+        performance_mode: bool = False,
     ) -> None:
         self._min_detection_confidence = min_detection_confidence
-        self._min_tracking_confidence = min_tracking_confidence
         self._max_num_faces = max_num_faces
-        self._refine_landmarks = refine_landmarks
-
-        try:
-            self._mp_face_mesh = mp.solutions.face_mesh
-        except AttributeError:
-            logger.error("MediaPipe 'solutions' not found (Python 3.14 wheel issue). Mocking FaceMesh for demo.")
-            class DummyFaceMesh:
-                def __init__(self, **kwargs):
-                    self.frame_count = 0
-                def process(self, image):
-                    self.frame_count += 1
-                    import math
-                    class Result: pass
-                    res = Result()
-                    # Fake EAR logic via sin wave to simulate blinks and focus
-                    blink = math.sin(self.frame_count * 0.2) > 0.8
-                    ear_val = 0.28 if not blink else 0.18
-                    
-                    pts = [type('Lm', (), {'x': 0.5, 'y': 0.5, 'z': 0.0})() for _ in range(478)]
-                    
-                    # Spread out the eye landmarks slightly to yield ~0.28 EAR
-                    # EAR = (p1-p5 + p2-p4) / (2 * p0-p3)
-                    # p1, p2, p4, p5 are vertical. p0, p3 are horizontal.
-                    for idx in [385, 387, 160, 158]: # Top lids
-                        pts[idx].y = 0.5 - (ear_val * 0.05)
-                    for idx in [373, 380, 153, 144]: # Bottom lids
-                        pts[idx].y = 0.5 + (ear_val * 0.05)
-                    for idx in [362, 263, 33, 133]: # Corners
-                        pts[idx].x = 0.5 - 0.1 if idx in [362, 33] else 0.5 + 0.1
-                        pts[idx].y = 0.5
-                    
-                    res.multi_face_landmarks = [
-                        type('Landmarks', (), {'landmark': pts})()
-                    ]
-                    import time
-                    time.sleep(0.03) # Simulate processing delay
-                    return res
-                def close(self): pass
-            
-            self._mp_face_mesh = type('Mock', (), {'FaceMesh': DummyFaceMesh})
         
-        self._face_mesh: Optional[mp.solutions.face_mesh.FaceMesh] = None
-        self._initialize()
-        logger.debug("FaceDetector initialized")
-
-    def _initialize(self) -> None:
-        self._face_mesh = self._mp_face_mesh.FaceMesh(
-            static_image_mode=False,
-            max_num_faces=self._max_num_faces,
-            refine_landmarks=self._refine_landmarks,
-            min_detection_confidence=self._min_detection_confidence,
-            min_tracking_confidence=self._min_tracking_confidence,
-        )
+        self.face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+        self.facemark = cv2.face.createFacemarkLBF()
+        try:
+            self.facemark.loadModel('lbfmodel.yaml')
+        except Exception as e:
+            logger.error(f"Failed to load LBF model: {e}")
+        
+        logger.debug(f"FaceDetector (OpenCV LBF) initialized (Performance Mode: {performance_mode})")
 
     def detect(self, rgb_frame: np.ndarray) -> DetectionResult:
         """
         Detect face and extract landmarks from an RGB frame.
-
-        Args:
-            rgb_frame: Input frame in RGB format (H, W, 3)
-
-        Returns:
-            DetectionResult with landmarks or detected=False
         """
-        if self._face_mesh is None:
-            return DetectionResult(detected=False)
+        gray = cv2.cvtColor(rgb_frame, cv2.COLOR_RGB2GRAY)
+        h, w = gray.shape[:2]
 
-        h, w = rgb_frame.shape[:2]
-
-        try:
-            results = self._face_mesh.process(rgb_frame)
-        except Exception as e:
-            logger.warning(f"Face mesh processing error: {e}")
-            return DetectionResult(detected=False)
-
-        if not results.multi_face_landmarks:
-            return DetectionResult(detected=False)
-
-        face_landmarks = results.multi_face_landmarks[0]
-
-        normalized = np.array(
-            [(lm.x, lm.y, lm.z) for lm in face_landmarks.landmark],
-            dtype=np.float32,
+        faces = self.face_cascade.detectMultiScale(
+            gray, scaleFactor=1.1, minNeighbors=5, minSize=(100, 100)
         )
 
-        pixel_coords = normalized.copy()
-        pixel_coords[:, 0] *= w
-        pixel_coords[:, 1] *= h
-        pixel_coords[:, 2] *= w
+        if len(faces) == 0:
+            return DetectionResult(detected=False)
+            
+        # Get the largest face
+        faces = sorted(faces, key=lambda f: f[2]*f[3], reverse=True)
+        face_box = faces[0]
+
+        ok, landmarks_collection = self.facemark.fit(gray, np.array([face_box]))
+        if not ok or landmarks_collection is None:
+            return DetectionResult(detected=False)
+
+        pts = landmarks_collection[0][0] # shape (68, 2)
+        
+        # Add z-dimension (fake 0.0) to match the previous shape (N, 3)
+        landmarks = np.zeros((68, 3), dtype=np.float32)
+        landmarks[:, :2] = pts
+
+        normalized = landmarks.copy()
+        normalized[:, 0] /= w
+        normalized[:, 1] /= h
+        
+        # We don't have true Z, but that's fine since we only use X,Y for EAR/MAR
+        # and PnP uses only X,Y of image points anyway.
 
         return DetectionResult(
             detected=True,
-            landmarks=pixel_coords,
+            landmarks=landmarks,
             normalized_landmarks=normalized,
             image_width=w,
             image_height=h,
@@ -202,11 +155,6 @@ class FaceDetector:
                 pts = landmarks[indices][:, :2].astype(np.int32)
                 cv2.polylines(output, [pts], True, color, 1, cv2.LINE_AA)
 
-        if draw_iris and result.has_iris:
-            for indices in [self.LEFT_IRIS_INDICES, self.RIGHT_IRIS_INDICES]:
-                center = landmarks[indices].mean(axis=0)[:2].astype(np.int32)
-                cv2.circle(output, tuple(center), 3, (0, 0, 255), -1)
-
         return output
 
     def get_camera_matrix(self, image_width: int, image_height: int) -> np.ndarray:
@@ -220,10 +168,7 @@ class FaceDetector:
         ], dtype=np.float64)
 
     def close(self) -> None:
-        if self._face_mesh:
-            self._face_mesh.close()
-            self._face_mesh = None
-        logger.debug("FaceDetector closed")
+        pass
 
     def __enter__(self) -> "FaceDetector":
         return self

@@ -106,7 +106,7 @@ def create_session(db, subject, days_ago, duration_min, focus_pct) -> str:
             WHERE id='{sid}'
         """))
 
-    print(f"  ✅ {subject:<20} {duration_min:>4.0f}min  {actual_focus:>4.0f}% focus")
+    print(f"  [OK] {subject:<20} {duration_min:>4.0f}min  {actual_focus:>4.0f}% focus")
     return sid
 
 
@@ -163,9 +163,9 @@ def main():
             pass
 
     print(f"\n{'='*52}")
-    print("  ✅ 12 demo sessions created!")
-    print("  🚀 Run: python run.py")
-    print("  📼 Go to History tab to see replays")
+    print("  [OK] 12 demo sessions created!")
+    print("  [>] Run: python run.py")
+    print("  [>] Go to History tab to see replays")
     print(f"{'='*52}\n")
 
 

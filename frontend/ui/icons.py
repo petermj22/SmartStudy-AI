@@ -335,7 +335,7 @@ def icon(
     fn = ICON_REGISTRY.get(name)
     if fn:
         return fn(size=size, color=color, stroke_width=stroke_width)
-    return f'<span title="unknown icon: {name}">⬡</span>'
+    return f'<span title="unknown icon: {name}">[?]</span>'
 
 
 def icon_with_label(

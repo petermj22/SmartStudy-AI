@@ -1,8 +1,0 @@
-"\"\"\"\nSmartStudy — Main Streamlit Application Entry Point\nAI-Powered Study Session Optimizer\n\nUsage: streamlit run frontend/app.py\n\"\"\"\n\nfrom __future__ import annotations\n\nimport sys\nfrom pathlib import Path\n\nimport streamlit as st\n\n# 
-<truncated 12716 bytes>
-
-
-
-
-"\"\"\"\nSmartStudy v2.0 — Main Application\nAll pages wired, all errors caught, health check gated.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport os\nimport sys\nimport time\nfrom pathlib import Path\n\nROOT = Path(__file__).parent.parent\nsys
-<truncated 18594 bytes>

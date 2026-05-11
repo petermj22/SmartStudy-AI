@@ -3,7 +3,10 @@
    Inspired by: Apple Vision Pro · Linear · Vercel · Raycast
    ============================================================ */
 
-/* ─── Google Fonts ──────────────────────────────────── */
+/* ─── Font Loading (graceful offline fallback) ──────── */
+/* These imports load when internet is available.        */
+/* When offline, CSS @import silently fails and the      */
+/* font-family fallbacks (Segoe UI, system-ui) take over */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800;900&family=JetBrains+Mono:wght@300;400;500&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0&display=swap');
 
@@ -1054,14 +1057,7 @@ hr {
     overflow: hidden;
 }
 
-.privacy-badge::before {
-    content: '🔒';
-    position: absolute;
-    top: -20px;
-    right: -10px;
-    font-size: 5rem;
-    opacity: 0.04;
-}
+
 
 /* ─── Study Tip Card ────────────────────────────────── */
 .tip-card {

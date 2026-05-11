@@ -17,13 +17,11 @@ import streamlit as st
 
 st.set_page_config(
     page_title="SmartStudy — AI Focus Assistant",
-    page_icon="🎯",
+    page_icon=":material/track_changes:",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
-        "Get Help":    "https://github.com/smartstudy",
-        "Report a bug": "https://github.com/smartstudy/issues",
-        "About": "SmartStudy v2.0 · 100% Local · Privacy-First",
+        "About": "SmartStudy v2.0 · 100% Local · Privacy-First · All data stored on-device",
     },
 )
 
@@ -59,7 +57,7 @@ def _load_css() -> None:
 # ─────────────────────────────────────────────────────────
 # BACKEND INIT
 # ─────────────────────────────────────────────────────────
-@st.cache_resource(show_spinner="🚀 Loading SmartStudy AI…")
+@st.cache_resource(show_spinner="Loading SmartStudy...")
 def _init_backend():
     """One-time backend initialization (cached across reruns)."""
     from loguru import logger
@@ -121,16 +119,9 @@ def _init_backend():
     except Exception as e:
         errors.append(f"InferenceEngine: {e}")
 
-    # ── Camera ────────────────────────────────────────────
+    # Camera is managed by WebRTC (browser) or SessionManager on demand.
+    # No pre-emptive camera.start() to avoid device lock conflicts.
     camera = None
-    try:
-        from backend.core.camera_manager import CameraManager, CameraConfig
-        camera = CameraManager(config=CameraConfig(
-            device_id=0, width=1280, height=720, fps=30,
-        ))
-        camera.start()
-    except Exception as e:
-        warnings.append(f"Camera: {e}")
 
     # ── Session Manager ───────────────────────────────────
     session_mgr = None
@@ -279,10 +270,11 @@ def _safe_page(name: str, render_fn) -> None:
     except Exception as exc:
         import traceback
         st.error(f"**{name} page error:** {exc}")
-        with st.expander("🔍 Full traceback"):
+        with st.expander("Full traceback", icon=":material/code:"):
             st.code(traceback.format_exc(), language="python")
         st.button(
-            "🔄 Reload page",
+            "Reload page",
+            icon=":material/refresh:",
             key=f"reload_btn_{name.lower().replace(' ', '_')}",
             on_click=lambda: st.session_state.update({"prefs_synced": False}),
         )
@@ -318,7 +310,7 @@ def _render_sidebar() -> None:
                 margin-bottom: 10px;
                 box-shadow: 0 4px 20px rgba(139,92,246,0.15);
             ">
-                <span style="font-size: 24px;">🎯</span>
+                <span class="material-symbols-rounded" style="font-size: 24px; color: #A78BFA;">track_changes</span>
             </div>
             <div style="
                 font-size: 1.15rem; font-weight: 800; color: #F8FAFC;
@@ -409,13 +401,8 @@ def _render_sidebar() -> None:
 def main() -> None:
     _load_css()
 
-    # ── Health check gate ────────────────────────────────
-    try:
-        from frontend.components.health_check import render_health_check
-        if not render_health_check():
-            return
-    except Exception:
-        pass  # Skip health check if component missing
+    # Health check runs silently — no blocking gate on launch.
+    # System status is available in Settings > System Info.
 
     # ── Backend init ─────────────────────────────────────
     app_state = _init_backend()
@@ -426,8 +413,8 @@ def main() -> None:
     # ── Show init warnings (non-blocking) ─────────────────
     if app_state.get("init_errors"):
         with st.expander(
-            f"⚠️ {len(app_state['init_errors'])} startup warning(s) — click to view",
-            expanded=False,
+            f"{len(app_state['init_errors'])} startup warning(s)",
+            expanded=False, icon=":material/warning:",
         ):
             for err in app_state["init_errors"]:
                 st.warning(err)
@@ -437,6 +424,14 @@ def main() -> None:
     _inject_audio()
     _update_stats()
     _desktop_notifications()
+
+    # ── Initialize session components (if missing) ─────────
+    if "live_data" not in st.session_state:
+        from frontend.components.live_dashboard import LiveDataStore
+        st.session_state["live_data"] = LiveDataStore()
+    if "thumb_recorder" not in st.session_state:
+        from backend.core.session_replay import SessionThumbnailRecorder
+        st.session_state["thumb_recorder"] = SessionThumbnailRecorder()
 
     # ── Sidebar Navigation ────────────────────────────────
     _render_sidebar()
@@ -486,11 +481,8 @@ def main() -> None:
         except ImportError as e:
             st.error(f"Settings not found: {e}")
 
-    # ── Auto-rerun during active session ──────────────────
-    sm = st.session_state.get("session_manager")
-    if sm and getattr(sm, "is_active", False):
-        time.sleep(0.08)
-        st.rerun()
+    # Session page manages its own refresh cycle (5s intervals).
+    # No global auto-rerun here — avoids CPU-hammering on idle pages.
 
 if __name__ == "__main__":
     main()

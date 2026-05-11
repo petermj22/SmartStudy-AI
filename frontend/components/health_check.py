@@ -108,7 +108,7 @@ def render_health_check() -> bool:
                     margin-bottom:16px;
                     box-shadow:0 8px 32px rgba(139,92,246,0.15);
                 ">
-                    <span style="font-size:28px;">🎯</span>
+                    <span class="material-symbols-rounded" style="font-size:28px;color:#A78BFA;">verified</span>
                 </div>
                 <h1 style="font-size:24px;font-weight:800;
                            letter-spacing:-0.03em;margin-bottom:6px;
@@ -118,7 +118,7 @@ def render_health_check() -> bool:
                     System Check
                 </h1>
                 <p style="color:#64748B;font-size:14px;">
-                    Verifying components before launch · {ok_count}/{total} ready
+                    Verifying components before launch &middot; {ok_count}/{total} ready
                 </p>
             </div>
         </div>
@@ -138,20 +138,27 @@ def render_health_check() -> bool:
         desc = info["description"]
 
         if status == "ok":
-            emoji = "✅"
+            status_text = "Ready"
+            status_color = "#34D399"
             row_bg = "rgba(16,185,129,0.06)"
             border = "rgba(16,185,129,0.1)"
         elif status == "warning":
-            emoji = "⚠️"
+            status_text = "Warning"
+            status_color = "#FBBF24"
             row_bg = "rgba(251,191,36,0.06)"
             border = "rgba(251,191,36,0.1)"
         else:
-            emoji = "❌" if critical else "➖"
-            row_bg = "rgba(239,68,68,0.06)" if critical else "rgba(100,116,139,0.04)"
-            border = "rgba(239,68,68,0.1)" if critical else "rgba(100,116,139,0.06)"
             if critical:
+                status_text = "Missing"
+                status_color = "#FB7185"
+                row_bg = "rgba(239,68,68,0.06)"
+                border = "rgba(239,68,68,0.1)"
                 critical_missing.append(name)
             else:
+                status_text = "Skipped"
+                status_color = "#64748B"
+                row_bg = "rgba(100,116,139,0.04)"
+                border = "rgba(100,116,139,0.06)"
                 optional_missing.append(name)
 
         badge = (
@@ -171,9 +178,9 @@ def render_health_check() -> bool:
                 <div style="display:flex;align-items:center;gap:10px;">
                     {badge}
                     <span style="font-weight:600;font-size:13px;color:#E2E8F0;">{name}</span>
-                    <span style="color:#475569;font-size:12px;">— {desc}</span>
+                    <span style="color:#475569;font-size:12px;"> &mdash; {desc}</span>
                 </div>
-                <span style="font-size:15px;">{emoji}</span>
+                <span style="font-size:12px;font-weight:600;color:{status_color};">{status_text}</span>
             </div>
             """,
             unsafe_allow_html=True,
@@ -182,13 +189,13 @@ def render_health_check() -> bool:
     # Fix instructions
     if critical_missing:
         st.error(
-            f"❌ Critical packages missing: {', '.join(critical_missing)}\n\n"
+            f"Critical packages missing: {', '.join(critical_missing)}\n\n"
             f"**Fix:** `pip install -r requirements.txt`"
         )
 
     if optional_missing:
         st.info(
-            f"💡 Optional packages not installed: {', '.join(optional_missing)}\n\n"
+            f"Optional packages not installed: {', '.join(optional_missing)}\n\n"
             f"Some features will be disabled. Install with: "
             f"`pip install -r requirements.txt`"
         )
@@ -198,15 +205,16 @@ def render_health_check() -> bool:
     col1, col2 = st.columns(2)
     with col1:
         if st.button(
-            "🚀 Launch SmartStudy" if all_ok else "⚠️ Launch Anyway",
+            "Launch SmartStudy" if all_ok else "Launch Anyway",
             type="primary",
             use_container_width=True,
+            icon=":material/rocket_launch:" if all_ok else ":material/warning:",
         ):
             st.session_state["health_check_passed"] = True
             st.rerun()
 
     with col2:
-        if st.button("🔄 Re-check", use_container_width=True):
+        if st.button("Re-check", use_container_width=True, icon=":material/refresh:"):
             st.rerun()
 
     return False

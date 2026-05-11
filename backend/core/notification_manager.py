@@ -59,26 +59,26 @@ class DesktopNotificationManager:
     def notify_break(self, minutes: float, fatigue_pct: float) -> None:
         if not self.config.enable_break or not self._can_send("break"):
             return
-        self._enqueue("☕ Time for a Break!",
+        self._enqueue("Time for a Break!",
             f"AI detected {fatigue_pct:.0f}% fatigue. A {minutes:.0f}-min break will help.", "normal")
 
     def notify_distraction(self, detail: str) -> None:
         if not self.config.enable_distraction or not self._can_send("distraction"):
             return
-        self._enqueue("👀 Stay Focused!", detail, "low")
+        self._enqueue("Stay Focused!", detail, "low")
 
     def notify_microsleep(self) -> None:
-        self._enqueue("🚨 Wake Up! Microsleep Detected",
+        self._enqueue("Wake Up! Microsleep Detected",
             "Your eyes were closed for too long. Take an immediate break.", "critical")
 
     def notify_achievement(self, title: str, message: str) -> None:
         if not self.config.enable_achievement:
             return
-        self._enqueue(f"🏆 {title}", message, "low")
+        self._enqueue(f"{title}", message, "low")
 
     def notify_session_complete(self, duration_minutes: float, focus_pct: float) -> None:
-        grade = "🌟 Excellent" if focus_pct > 80 else "✅ Good" if focus_pct > 60 else "📈 Keep going"
-        self._enqueue("📚 Session Complete!",
+        grade = "Excellent" if focus_pct > 80 else "Good" if focus_pct > 60 else "Keep going"
+        self._enqueue("Session Complete!",
             f"{grade} — {duration_minutes:.0f}min | {focus_pct:.0f}% focus", "low")
 
     def on_notification(self, callback: Callable) -> None:

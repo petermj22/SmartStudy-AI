@@ -210,7 +210,7 @@ font-family: 'JetBrains Mono', monospace;
         
         st.markdown("""
 <div class="glass-card" style="margin-top: 20px; border-left: 4px solid #06B6D4;">
-<h4 style="color: #F8FAFC; margin-bottom: 8px;">💡 Study Insight</h4>
+<h4 style="color: #F8FAFC; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;"><span class="material-symbols-rounded" style="font-size: 1.1rem; color: #06B6D4;">info</span> Study Insight</h4>
 <p style="color: #94A3B8; font-size: 0.9rem; line-height: 1.5;">
 Your focus stability ribbon indicates how consistent your attention is. 
 A <b>narrower ribbon</b> means you're reaching a "flow state" more consistently across different study sessions.

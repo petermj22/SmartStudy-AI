@@ -83,7 +83,7 @@ text-transform: uppercase;
 letter-spacing: 0.15em;
 font-weight: 600;
 margin-bottom: 12px;
-">☕ Break Time</div>
+"><span class="material-symbols-rounded" style="font-size: 1.1rem; vertical-align: middle; margin-right: 4px;">coffee</span> Break Time</div>
 <div style="
 font-size: 3.2rem;
 font-weight: 200;
@@ -125,7 +125,7 @@ def render_fatigue_meter(fatigue_score: float, minutes_until_break: float) -> No
 <!-- Header row -->
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
 <div style="display: flex; align-items: center; gap: 8px;">
-<span style="font-size: 1rem;">🧠</span>
+<span class="material-symbols-rounded" style="font-size: 1.1rem; color: #94A3B8;">psychology</span>
 <span style="
 color: #94A3B8;
 font-size: 0.72rem;

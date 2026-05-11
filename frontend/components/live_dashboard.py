@@ -121,6 +121,7 @@ def render_live_timeline(
     x = list(range(len(data_store.attention_history)))
     layout_cfg = PLOTLY_THEME.copy()
     layout_cfg.pop("margin", None)
+    layout_cfg.pop("legend", None)  # Avoid duplicate with custom legend below
 
     fig = go.Figure()
 

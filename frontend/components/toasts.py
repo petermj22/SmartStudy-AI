@@ -9,8 +9,8 @@ import streamlit as st
 
 
 def show_toast(message: str, type: str = "info", duration: int = 4) -> None:
-    icons = {"success": "✅", "warning": "⚠️", "error": "🚨", "info": "💡"}
-    st.toast(message, icon=icons.get(type, "ℹ️"))
+    icons = {"success": ":material/check_circle:", "warning": ":material/warning:", "error": ":material/error:", "info": ":material/info:"}
+    st.toast(message, icon=icons.get(type, ":material/info:"))
 
 
 def process_alert_toasts(alerts: list) -> None:

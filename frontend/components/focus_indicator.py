@@ -18,13 +18,31 @@ def render_focus_indicator(
 ) -> None:
     """Render the animated orb focus indicator with glassmorphism panel."""
 
+    # SVG icons for each state (inline, no external deps)
+    _icon_focused = (
+        '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" '
+        'stroke="#34D399" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
+        '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/>'
+        '<circle cx="12" cy="12" r="2"/></svg>'
+    )
+    _icon_distracted = (
+        '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" '
+        'stroke="#FB7185" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
+        '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>'
+    )
+    _icon_fatigued = (
+        '<svg width="36" height="36" viewBox="0 0 24 24" fill="none" '
+        'stroke="#FBBF24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
+        '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>'
+    )
+
     state_config = {
         1: {
             "color": "#34D399",
             "glow": "rgba(16, 185, 129, 0.25)",
             "orb_class": "focus-orb-focused",
             "label": "FOCUSED",
-            "icon": "✦",
+            "icon_svg": _icon_focused,
             "ring_color": "#10B981",
             "status_text": "Deep focus detected",
         },
@@ -33,7 +51,7 @@ def render_focus_indicator(
             "glow": "rgba(244, 63, 94, 0.25)",
             "orb_class": "focus-orb-distracted",
             "label": "DISTRACTED",
-            "icon": "⚡",
+            "icon_svg": _icon_distracted,
             "ring_color": "#F43F5E",
             "status_text": "Attention drifting",
         },
@@ -42,14 +60,14 @@ def render_focus_indicator(
             "glow": "rgba(245, 158, 11, 0.25)",
             "orb_class": "focus-orb-fatigued",
             "label": "FATIGUED",
-            "icon": "◑",
+            "icon_svg": _icon_fatigued,
             "ring_color": "#F59E0B",
             "status_text": "Mental fatigue rising",
         },
     }
     cfg = state_config.get(focus_state, state_config[1])
     conf_pct = int(confidence * 100)
-    attn_pct = int(attention_score * 100)
+    attn_pct = int(attention_score * 100) if attention_score <= 1.0 else int(attention_score)
 
     # Animated gradient ring around the orb
     st.markdown(f"""
@@ -59,10 +77,11 @@ def render_focus_indicator(
 <div style="
 position: relative;
 z-index: 2;
-font-size: 2.8rem;
-line-height: 1;
+display: flex;
+align-items: center;
+justify-content: center;
 filter: drop-shadow(0 0 12px {cfg['glow']});
-">{cfg['icon']}</div>
+">{cfg['icon_svg']}</div>
 </div>
 <!-- State Label -->
 <div style="

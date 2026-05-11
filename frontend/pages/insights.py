@@ -30,7 +30,7 @@ Personalized recommendations powered by your data
         insights = []
 
     for i, insight in enumerate(insights):
-        icon = insight.get("icon", "📊")
+        icon = insight.get("icon", "info")
         title = insight.get("title", "")
         message = insight.get("message", "")
         itype = insight.get("type", "info")
@@ -53,7 +53,6 @@ padding: 20px 24px;
 ">
 <div style="display: flex; align-items: flex-start; gap: 14px;">
 <div style="
-font-size: 1.5rem;
 flex-shrink: 0;
 width: 44px;
 height: 44px;
@@ -62,7 +61,7 @@ background: {border_color}15;
 display: flex;
 align-items: center;
 justify-content: center;
-">{icon}</div>
+"><span style="display:block;width:10px;height:10px;border-radius:50%;background:{border_color};"></span></div>
 <div style="flex: 1;">
 <div style="
 font-weight: 700;

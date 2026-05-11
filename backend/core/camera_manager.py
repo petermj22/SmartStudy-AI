@@ -143,11 +143,11 @@ class CameraManager:
         )
 
         if brightness < 60:
-            quality, rec = "too_dark", "💡 Increase room lighting"
+            quality, rec = "too_dark", "Increase room lighting"
         elif brightness > 200:
-            quality, rec = "too_bright", "🌅 Reduce background light"
+            quality, rec = "too_bright", "Reduce background light"
         elif contrast < 25:
-            quality, rec = "low_contrast", "🔆 Improve lighting direction"
+            quality, rec = "low_contrast", "Improve lighting direction"
         else:
             quality, rec = "good", None
 

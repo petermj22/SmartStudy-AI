@@ -238,7 +238,12 @@ class FeatureExtractor:
         right_dist = float(np.linalg.norm(right_brow[:2] - right_eye_center[:2]))
         avg_dist = (left_dist + right_dist) / 2.0
 
-        face_height = float(np.linalg.norm(landmarks[10, :2] - landmarks[152, :2]))
+        # Face height in 68-point: chin is 8, top of nose bridge is 27
+        if landmarks.shape[0] == 68:
+            face_height = float(np.linalg.norm(landmarks[27, :2] - landmarks[8, :2])) * 1.5
+        else:
+            face_height = float(np.linalg.norm(landmarks[10, :2] - landmarks[152, :2]))
+            
         if face_height > 0:
             avg_dist /= face_height
         return float(np.clip(avg_dist, 0, 1))

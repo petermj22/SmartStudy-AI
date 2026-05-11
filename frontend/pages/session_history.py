@@ -54,7 +54,7 @@ def render_session_history() -> None:
             st.markdown(
                 f"""
                 <div class="glass-card" style="text-align:center;padding:60px 20px;">
-                    <div style="font-size:48px;margin-bottom:16px;">📼</div>
+                    <div class="material-symbols-rounded" style="font-size:48px;margin-bottom:16px;color:#475569;">video_library</div>
                     <div style="font-size:16px;font-weight:600;color:#F8FAFC;">
                         Select a Session to Replay</div>
                     <div style="font-size:13px;color:#64748B;margin-top:8px;">
@@ -94,7 +94,7 @@ def _render_session_list(db: DatabaseManager) -> None:
         time_str = start_time.strftime("%H:%M") if start_time else "—"
 
         focus_color = "#34D399" if focus >= 70 else "#FBBF24" if focus >= 50 else "#FB7185"
-        focus_dot = "🟢" if focus >= 70 else "🟡" if focus >= 50 else "🔴"
+        focus_dot = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:' + focus_color + ';"></span>'
 
         is_selected = st.session_state.get("selected_session_id") == session_id
         bg = "rgba(139,92,246,0.08)" if is_selected else "rgba(255,255,255,0.02)"
@@ -233,10 +233,13 @@ def _render_session_detail(
             unsafe_allow_html=True,
         )
 
-        frame_idx = st.slider(
-            "Timeline", min_value=0, max_value=max(0, len(frames) - 1),
-            value=0, key=f"replay_scrubber_{session_id}", label_visibility="collapsed",
-        )
+        if len(frames) > 1:
+            frame_idx = st.slider(
+                "Timeline", min_value=0, max_value=len(frames) - 1,
+                value=0, key=f"replay_scrubber_{session_id}", label_visibility="collapsed",
+            )
+        else:
+            frame_idx = 0
 
         current_frame = frames[frame_idx]
         img = replay_engine.decode_thumbnail(current_frame)
@@ -246,8 +249,8 @@ def _render_session_detail(
             st.image(img, use_container_width=True, caption=f"Frame {frame_idx + 1}/{len(frames)}")
 
         with col_meta:
-            state_labels = {0: "😵 Distracted", 1: "🎯 Focused", 2: "😴 Fatigued"}
-            state = state_labels.get(current_frame.focus_state, "❓ Unknown")
+            state_labels = {0: "Distracted", 1: "Focused", 2: "Fatigued"}
+            state = state_labels.get(current_frame.focus_state, "Unknown")
             st.markdown(
                 f"""
                 <div class="glass-card" style="padding:16px;font-size:13px;">
@@ -286,13 +289,13 @@ def _render_session_detail(
             df = pd.DataFrame(raw_frames)
             csv_data = df.to_csv(index=False)
             st.download_button(
-                label="📊 Export CSV", data=csv_data,
+                label="Export CSV", data=csv_data,
                 file_name=f"session_{session_id[:8]}.csv",
                 mime="text/csv", use_container_width=True,
             )
 
     with exp2:
-        if st.button("📄 Generate PDF", use_container_width=True):
+        if st.button("Generate PDF", use_container_width=True):
             with st.spinner("Generating PDF report..."):
                 metrics_dict = {
                     "duration_minutes": session.duration_minutes,
@@ -308,7 +311,7 @@ def _render_session_detail(
                 if pdf_path and pdf_path.exists():
                     with open(pdf_path, "rb") as f:
                         st.download_button(
-                            label="⬇️ Download PDF", data=f.read(),
+                            label="Download PDF", data=f.read(),
                             file_name=f"session_{session_id[:8]}_report.pdf",
                             mime="application/pdf", use_container_width=True,
                         )
@@ -316,14 +319,14 @@ def _render_session_detail(
                     st.error("PDF export requires: pip install reportlab")
 
     with exp3:
-        if frames and st.button("🎬 Export Video", use_container_width=True):
+        if frames and st.button("Export Video", use_container_width=True):
             with st.spinner("Generating summary video..."):
                 output_path = f"data/replays/session_{session_id[:8]}_replay.mp4"
                 video_path = replay_engine.generate_summary_video(frames, output_path)
                 if video_path.exists():
                     with open(video_path, "rb") as f:
                         st.download_button(
-                            label="⬇️ Download MP4", data=f.read(),
+                            label="Download MP4", data=f.read(),
                             file_name=f"session_{session_id[:8]}_replay.mp4",
                             mime="video/mp4", use_container_width=True,
                         )

@@ -169,7 +169,11 @@ class InferenceEngine:
             self._consecutive_looking_away += 1
             result.focus_state = 0
             result.focus_label = "no_face"
+            result.smoothed_focus_state = 0
+            result.smoothed_focus_label = "no_face"
             result.attention_score = 0.0
+            self._state_history.append(0)
+            self._confidence_history.append(1.0)
             result.total_inference_ms = (time.perf_counter() - t0) * 1000
             self._last_result = result
             return result
@@ -302,14 +306,14 @@ class InferenceEngine:
         if blink_stats.is_microsleep:
             alerts.append(Alert(
                 type="microsleep", severity="critical",
-                message="⚠️ Microsleep detected! Consider a break immediately.",
+                message="Microsleep detected! Consider a break immediately.",
             ))
 
         # Yawn detection (with cooldown)
         if features.yawn_detected and time.time() > self._yawn_cooldown:
             alerts.append(Alert(
                 type="yawn", severity="warning",
-                message="😴 Yawn detected — you might be getting tired.",
+                message="Yawn detected — you might be getting tired.",
             ))
             self._yawn_cooldown = time.time() + 30  # 30s cooldown
 
@@ -319,7 +323,7 @@ class InferenceEngine:
             if self._consecutive_looking_away > 300:  # 10s at 30fps
                 alerts.append(Alert(
                     type="looking_away", severity="info",
-                    message="👀 You've been looking away for a while.",
+                    message="You've been looking away for a while.",
                 ))
         else:
             self._consecutive_looking_away = 0
@@ -328,14 +332,14 @@ class InferenceEngine:
         if features.blink_rate > 30:
             alerts.append(Alert(
                 type="eye_strain", severity="warning",
-                message="👁️ High blink rate — consider the 20-20-20 rule.",
+                message="High blink rate — consider the 20-20-20 rule.",
             ))
 
         # Fatigue-based break recommendation
         if fatigue.fatigue_score > 0.7:
             alerts.append(Alert(
                 type="fatigue", severity="warning",
-                message=f"🧠 Fatigue level high — break recommended in {fatigue.minutes_until_break:.0f} min.",
+                message=f"Fatigue level high — break recommended in {fatigue.minutes_until_break:.0f} min.",
             ))
 
         return alerts

@@ -49,7 +49,7 @@ def _run_calibration_wizard(db):
     }
     db.update_user_preferences(new_prefs)
     
-    st.success("✅ Calibration complete! Your focus detection is now personalized.")
+    st.success("Calibration complete. Your focus detection is now personalized.")
     time.sleep(2)
     st.session_state.show_calibration = False
     st.rerun()
@@ -131,7 +131,7 @@ Customize your SmartStudy experience
                 "sound": sound,
             }
             db.update_user_preferences(new_prefs)
-            st.success("✨ Preferences saved!")
+            st.success("Preferences saved.")
 
     with tab2:
         st.markdown("""
@@ -148,6 +148,15 @@ Customize your SmartStudy experience
 
         with cam_col2:
             st.number_input("FPS", min_value=10, max_value=60, value=30, key="cam_fps")
+            
+            perf_mode = st.toggle(
+                "Performance Mode",
+                value=prefs.get("performance_mode", False),
+                help="Optimizes CV pipeline for lower-end hardware by disabling high-resolution landmarks.",
+                key="pref_perf_mode",
+            )
+            if perf_mode != prefs.get("performance_mode"):
+                db.update_user_preferences({"performance_mode": perf_mode})
 
             st.markdown("""
 <div class="glass-card" style="padding: 14px 18px; margin-top: 8px;">
@@ -282,7 +291,7 @@ padding: 16px;
 margin-top: 12px;
 ">
 <div style="color: #FB7185; font-weight: 600; font-size: 0.85rem; margin-bottom: 6px;">
-⚠️ Permanent Action
+Permanent Action
 </div>
 <div style="color: #94A3B8; font-size: 0.82rem;">
 This will permanently delete all sessions, frames, and statistics.

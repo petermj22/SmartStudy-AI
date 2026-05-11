@@ -29,21 +29,21 @@ def render_alerts(alerts: List[Dict[str, str]], max_display: int = 3) -> None:
                 "border": "#F43F5E",
                 "bg": "rgba(244, 63, 94, 0.08)",
                 "glow": "rgba(244, 63, 94, 0.15)",
-                "icon": "🚨",
+                "icon": "<span class='material-symbols-rounded'>error</span>",
                 "label": "CRITICAL",
             },
             "warning": {
                 "border": "#F59E0B",
                 "bg": "rgba(245, 158, 11, 0.08)",
                 "glow": "rgba(245, 158, 11, 0.12)",
-                "icon": "⚠️",
+                "icon": "<span class='material-symbols-rounded'>warning</span>",
                 "label": "WARNING",
             },
             "info": {
                 "border": "#8B5CF6",
                 "bg": "rgba(139, 92, 246, 0.08)",
                 "glow": "rgba(139, 92, 246, 0.1)",
-                "icon": "ℹ️",
+                "icon": "<span class='material-symbols-rounded'>info</span>",
                 "label": "INFO",
             },
         }
@@ -103,7 +103,7 @@ font-size: 3.5rem;
 margin-bottom: 16px;
 animation: orb-breathe 3s ease-in-out infinite;
 display: inline-block;
-">🧘</div>
+"><span class="material-symbols-rounded" style="font-size:inherit;">self_improvement</span></div>
 <div style="
 font-size: 1.5rem;
 font-weight: 800;
@@ -126,10 +126,10 @@ Suggested: <span style="color: #34D399; font-weight: 600;">{recommended_duration
 
     col1, col2, col3 = st.columns([1, 1, 1])
     with col1:
-        accepted = st.button("✅ Take Break", key="break_accept", use_container_width=True)
+        accepted = st.button("Take Break", key="break_accept", use_container_width=True)
     with col2:
-        st.button("⏰ 5 min snooze", key="break_snooze_5", use_container_width=True)
+        st.button("5 min snooze", key="break_snooze_5", use_container_width=True)
     with col3:
-        st.button("⏰ 10 min snooze", key="break_snooze_10", use_container_width=True)
+        st.button("10 min snooze", key="break_snooze_10", use_container_width=True)
 
     return accepted

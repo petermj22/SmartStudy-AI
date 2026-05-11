@@ -127,11 +127,11 @@ font-weight: 400;
                 from frontend.components.sound_system import play_session_start
                 if st.session_state.get("_pref_sound", True):
                     play_session_start()
-                st.success(f"✨ Session started! ID: {session_id[:8]}...")
+                st.success(f"Session started. ID: {session_id[:8]}")
                 time.sleep(0.5)
                 st.rerun()
             else:
-                st.error("❌ Failed to start session. Check camera connection.")
+                st.error("Failed to start session. Check camera connection.")
 
     # Camera check
     with st.expander("Camera Setup", icon=":material/videocam:"):
@@ -182,7 +182,7 @@ box-shadow: 0 0 8px rgba(16,185,129,0.4);"></div>
 </div>
 """, unsafe_allow_html=True)
         else:
-            st.warning("⚠️ No cameras detected. Please connect a webcam.")
+            st.warning("No cameras detected. Please connect a webcam.")
 
 
 def _render_active_session():
@@ -255,7 +255,7 @@ def _render_active_session():
                 from frontend.components.sound_system import play_session_end
                 if st.session_state.get("_pref_sound", True):
                     play_session_end()
-                st.success(f"✨ Session complete! Focus: {result.get('focus_percentage', 0):.0f}%")
+                st.success(f"Session complete. Focus: {result.get('focus_percentage', 0):.0f}%")
                 time.sleep(1)
                 st.session_state.current_page = "dashboard"
                 st.rerun()
@@ -284,14 +284,29 @@ def _render_active_session():
         if _HAS_WEBRTC:
             result = render_webrtc_camera(key="session_camera")
             if result:
-                # Push to live data store
+                # Update session manager metrics from WebRTC result
+                # (in non-WebRTC mode this happens in the processing thread)
+                try:
+                    sm._update_metrics(result)
+                except Exception:
+                    pass
+
+                # Save frame sample to database
+                try:
+                    if result.frame_number % sm._frame_sample_rate == 0:
+                        sm._save_frame_sample(result)
+                except Exception:
+                    pass
+
+                # Push to live data store for charts
                 store = st.session_state.get("live_data")
                 if store:
+                    att = getattr(result, 'attention_score', 0)
                     store.push(
-                        attention=getattr(result, 'attention_score', 0),
-                        ear=getattr(result, 'ear', 0),
+                        attention=att * 100 if att <= 1.0 else att,
+                        ear=result.features.avg_ear if result.features else 0,
                         fatigue=getattr(result, 'fatigue_score', 0),
-                        state=getattr(result, 'focus_state', -1),
+                        state=getattr(result, 'smoothed_focus_state', -1),
                     )
         else:
             _render_camera_simulation()
@@ -323,8 +338,9 @@ def _render_active_session():
 </div>
 """, unsafe_allow_html=True)
 
-        # Attention gauge
-        att_score = getattr(metrics, 'current_attention_score', 0)
+        # Attention gauge — convert 0-1 score to 0-100 for display
+        att_raw = getattr(metrics, 'current_attention_score', 0)
+        att_score = att_raw * 100 if att_raw <= 1.0 else att_raw
         st.plotly_chart(
             render_attention_gauge(att_score, height=190),
             use_container_width=True,

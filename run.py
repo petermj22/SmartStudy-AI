@@ -178,7 +178,7 @@ def check_models() -> None:
 
 
 def run_demo_data() -> None:
-    print("\n🎬 Creating demo data...")
+    print("\n[+] Creating demo data...")
     result = subprocess.run(
         [sys.executable, "scripts/create_demo_data.py"],
         capture_output=True, text=True,
@@ -197,11 +197,11 @@ def launch(port: int = 8501) -> None:
         "--server.headless=false",
         "--server.runOnSave=false",
         "--browser.gatherUsageStats=false",
-        "--theme.base=light",
-        "--theme.primaryColor=#3B82F6",
-        "--theme.backgroundColor=#F8FAFC",
-        "--theme.secondaryBackgroundColor=#FFFFFF",
-        "--theme.textColor=#0F172A",
+        "--theme.base=dark",
+        "--theme.primaryColor=#8B5CF6",
+        "--theme.backgroundColor=#09090B",
+        "--theme.secondaryBackgroundColor=#12121E",
+        "--theme.textColor=#E2E8F0",
         "--theme.font=sans serif",
     ]
     msg = f"\n{BOLD}[LAUNCH] Launching -> http://localhost:{port}{RESET}"

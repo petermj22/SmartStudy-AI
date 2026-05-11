@@ -45,7 +45,7 @@ alerts:
 
 ui:
   page_title: "SmartStudy"
-  page_icon: "🎯"
+  page_icon: "SmartStudy"
   layout: "wide"
   update_interval_seconds: 0.1
   chart_height: 320

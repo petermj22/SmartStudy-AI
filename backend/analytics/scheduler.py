@@ -80,37 +80,45 @@ class StudyScheduler:
         self, hour: int, subjects: Optional[List[str]],
         subject_stats: Dict[str, Dict[str, Any]],
     ) -> str:
-        """Assign the best subject for a given hour."""
+        """Assign the best subject for a given hour using difficulty matching."""
         if not subjects:
-            return "General"
+            return "General Review"
 
         # Hard subjects in peak hours, easier ones later
         if subject_stats:
+            # Sort by focus percentage (lower = harder)
             sorted_subjects = sorted(
                 subjects,
-                key=lambda s: subject_stats.get(s, {}).get("avg_focus_percentage", 50),
+                key=lambda s: subject_stats.get(s, {}).get("avg_focus_percentage", 65),
             )
-            # Hardest subject (lowest focus) goes to best hour slot
+            
+            # Morning peak (8-11): Hardest subject
             if 8 <= hour <= 11:
-                return sorted_subjects[0] if sorted_subjects else "General"
-            elif len(sorted_subjects) > 1:
+                return sorted_subjects[0]
+            # Afternoon (13-16): Medium difficulty or preferred
+            elif 13 <= hour <= 16:
+                return sorted_subjects[len(sorted_subjects)//2] if len(sorted_subjects) > 1 else sorted_subjects[0]
+            # Evening (18-21): Easiest or review
+            else:
                 return sorted_subjects[-1]
 
-        return subjects[0] if subjects else "General"
+        return subjects[hour % len(subjects)] if subjects else "General Review"
 
     def _get_time_recommendation(self, hour: int) -> str:
         if 6 <= hour <= 9:
-            return "🌅 Fresh mind — tackle challenging material"
+            return "Cognitive prime — tackle high-complexity material"
         elif 10 <= hour <= 12:
-            return "☀️ Peak alertness — deep focus work"
+            return "Peak focus window — ideal for deep work and problem solving"
         elif 13 <= hour <= 14:
-            return "🥱 Post-lunch dip — lighter review work"
+            return "Circadian dip — best for administrative or low-effort tasks"
         elif 15 <= hour <= 17:
-            return "📝 Second wind — practice problems"
+            return "Second alertness peak — good for practice and repetition"
         elif 18 <= hour <= 20:
-            return "🌙 Evening — revision and recall practice"
+            return "Consolidation phase — focus on review and recall"
+        elif 21 <= hour <= 23:
+            return "Wind-down — keep sessions short and focused on planning"
         else:
-            return "💤 Late study — keep sessions short"
+            return "Standard study block — maintain consistent focus"
 
     def get_break_recommendation(
         self, session_duration_min: float, fatigue_score: float,
@@ -121,21 +129,21 @@ class StudyScheduler:
                 "should_break": True,
                 "urgency": "high",
                 "break_duration_min": 15,
-                "message": "🛑 Take a long break now — high fatigue detected",
+                "message": "Take a long break now — high fatigue detected",
             }
         elif fatigue_score > 0.6:
             return {
                 "should_break": True,
                 "urgency": "medium",
                 "break_duration_min": 10,
-                "message": "⚠️ Break recommended — fatigue building up",
+                "message": "Break recommended — fatigue building up",
             }
         elif session_duration_min > 50:
             return {
                 "should_break": True,
                 "urgency": "low",
                 "break_duration_min": 5,
-                "message": "⏰ Good time for a short Pomodoro break",
+                "message": "Good time for a short Pomodoro break",
             }
         else:
             remaining = max(0, 25 - (session_duration_min % 25))
@@ -143,5 +151,5 @@ class StudyScheduler:
                 "should_break": False,
                 "urgency": "none",
                 "break_duration_min": 0,
-                "message": f"✅ Going strong — next break in ~{remaining:.0f} min",
+                "message": f"Going strong — next break in ~{remaining:.0f} min",
             }

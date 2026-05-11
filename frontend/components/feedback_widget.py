@@ -71,11 +71,11 @@ def render_feedback_widget(
     )
 
     rating_labels = {
-        1: "😵 Very distracted",
-        2: "😕 Somewhat off",
-        3: "😐 Moderate",
-        4: "😊 Well focused",
-        5: "🔥 In the zone!",
+        1: "Very distracted",
+        2: "Somewhat off",
+        3: "Moderate",
+        4: "Well focused",
+        5: "In the zone!",
     }
 
     cols = st.columns(5)
